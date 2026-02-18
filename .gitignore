@@ -3,15 +3,6 @@
 .env.local
 .env.*
 
-# Data
-Petrobras Data/
-*.parquet
-*.csv
-*.xls
-*.xlsx
-*.zip
-*.tar.gz
-
 # Python
 __pycache__/
 *.py[cod]
