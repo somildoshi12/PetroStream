@@ -1,0 +1,6 @@
+pandas
+scikit-learn
+pyarrow
+fastparquet
+joblib
+boto3

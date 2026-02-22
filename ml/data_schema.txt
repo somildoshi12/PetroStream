@@ -1,0 +1,16 @@
+Index(['ABER-CKGL', 'ABER-CKP', 'ESTADO-DHSV', 'ESTADO-M1', 'ESTADO-M2',
+       'ESTADO-PXO', 'ESTADO-SDV-GL', 'ESTADO-SDV-P', 'ESTADO-W1', 'ESTADO-W2',
+       'ESTADO-XO', 'P-ANULAR', 'P-JUS-BS', 'P-JUS-CKGL', 'P-JUS-CKP',
+       'P-MON-CKGL', 'P-MON-CKP', 'P-MON-SDV-P', 'P-PDG', 'PT-P', 'P-TPT',
+       'QBS', 'QGL', 'T-JUS-CKP', 'T-MON-CKP', 'T-PDG', 'T-TPT', 'class',
+       'state'],
+      dtype='object')
+                     ABER-CKGL  ABER-CKP  ESTADO-DHSV  ...      T-TPT  class  state
+timestamp                                              ...                         
+2018-09-30 00:09:47        NaN       NaN          NaN  ...  89.712399      0      0
+2018-09-30 00:09:48        NaN       NaN          NaN  ...  89.712376      0      0
+2018-09-30 00:09:49        NaN       NaN          NaN  ...  89.712356      0      0
+2018-09-30 00:09:50        NaN       NaN          NaN  ...  89.712336      0      0
+2018-09-30 00:09:51        NaN       NaN          NaN  ...  89.712316      0      0
+
+[5 rows x 29 columns]

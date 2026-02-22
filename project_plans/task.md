@@ -11,23 +11,24 @@
   - [ ] Create Kinesis Firehose Delivery Stream
   - [ ] Create IAM Roles
 - [ ] **Phase 2: Machine Learning (Local Training)**
-  - [ ] Create ML training script (`ml/train_model.py`)
+  - [x] Create ML training script (`ml/train_model.ipynb`)
   - [ ] Train Isolation Forest on Mac M4
   - [ ] Save model to .joblib and upload to S3
-- [ ] **Phase 3: Stream Processing (Docker + ECS Fargate)**
-  - [ ] Create Dockerfile for Consumer App
-  - [ ] Create ECR Repository
-  - [ ] Create ECS Cluster & Task Definition
-  - [ ] Create ECS Service with Auto-Scaling
-  - [ ] Create Application Load Balancer (ALB)
+- [x] **Phase 3: Stream Processing (AWS Lambda)**
+  - [x] Create `lambda/app.py` for inference logic
+  - [x] Create `lambda/Dockerfile` and `lambda/requirements.txt`
+  - [x] Update Terraform to create ECR Repository
+  - [x] Build & Push Docker image to ECR
+  - [x] Update Terraform to create AWS Lambda Function (from ECR image)
+  - [x] Add SQS Trigger to Lambda Function in Terraform
 - [ ] **Phase 4: Frontend (Streamlit)**
-  - [ ] Create Streamlit Dashboard (`dashboard/app.py`)
-  - [ ] Implement Summary Metrics (Total Anomalies, Active Wells)
-  - [ ] Implement Real-time Anomaly Table
-  - [ ] Integrate Altair/Plotly Time-Series Charts
-  - [ ] Connect to Athena using boto3/awswrangler
-  - [ ] Create Power BI Portal/Link in Streamlit
-  - [ ] Create Dockerfile for Dashboard
+  - [x] Create Streamlit Dashboard (`dashboard/app.py`)
+  - [x] Implement Summary Metrics (Total Anomalies, Active Wells)
+  - [x] Implement Real-time Anomaly Table
+  - [x] Integrate Altair/Plotly Time-Series Charts
+  - [x] Connect to Athena using boto3/awswrangler
+  - [x] Create Power BI Portal/Link in Streamlit
+  - [x] Create Dockerfile for Dashboard
   - [ ] Deploy Dashboard to ECS Fargate
 - [ ] **Phase 5: Business Intelligence (Power BI)**
   - [ ] Install Athena ODBC Driver

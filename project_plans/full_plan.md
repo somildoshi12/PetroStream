@@ -12,16 +12,17 @@
 ### Data Flow
 
 1.  **Source**: Local Parquet Files (`/Petrobras Data/`).
-2.  **Ingestion (Producer)**: Local Python script streams data to AWS Kinesis.
-3.  **Processing (ML Consumer)**:
-    - **Docker Container**: Python application running the ML model.
+2.  **Ingestion (Producer)**: Local Python script streams data by batching it and uploading directly to the AWS S3 raw-data bucket.
+3.  **SQS Event Trigger**: S3 sends a notification to Amazon SQS when a new batch file arrives.
+4.  **Processing (ML Consumer)**:
+    - **Docker Container**: Python application running the ML model triggered by SQS.
     - **AWS ECS (Fargate)**: Serverless container orchestration.
     - **Application Load Balancer (ALB)**: Distributes incoming traffic.
     - **Auto-Scaling**: ECS Service scales up/down based on CPU/Memory usage.
     - **Model**: **Isolation Forest** (Unsupervised Anomaly Detection).
       - _Training_: Locally on **Mac M4**.
       - _Deployment_: Docker Image pushed to **Amazon ECR**.
-4.  **Visualization (Hybrid)**:
+5.  **Visualization (Hybrid)**:
     - **Custom Web App**: Built with **Streamlit (Python)** for real-time operational views.
     - **BI Tool**: **Power BI** for executive dashboards and historical reporting.
     - **Hosting**: Streamlit on ECS Fargate.
@@ -57,7 +58,7 @@ This project is a **Hybrid Workflow**. Here is exactly what runs where:
 
 1.  **Data Source**: The Petrobras Parquet files live here.
 2.  **Model Training**:
-    - We write a Python script (`train_model.py`) using `scikit-learn`.
+    - We write a Jupyter Notebook (`train_model.ipynb`) using `scikit-learn`.
     - We read the Parquet files locally.
     - We train the **Isolation Forest** model on your M4 chip.
     - We save the trained model to a file (`model.joblib`).
@@ -66,14 +67,14 @@ This project is a **Hybrid Workflow**. Here is exactly what runs where:
     - You run `terraform apply` locally to tell AWS what to build.
 4.  **Data Producer**:
     - A Python script (`producer.py`) runs on your Mac.
-    - It reads local data and "replays" it to the cloud (AWS Kinesis) as if it were happening live.
+    - It reads local data, batches it in memory, and uploads directly to AWS S3.
 5.  **Visualization (Power BI)**: runs on your Mac, connecting to AWS.
 
 ### 🟠 AWS Cloud Environment
 
-1.  **Ingestion (Kinesis Data Streams)**: Receives the data stream from your Mac.
-2.  **Compute (AWS Lambda)**:
-    - Runs the _inference_ code (anomaly detection).
+1.  **Ingestion**: S3 Event Notifications trigger messages to an SQS Queue.
+2.  **Compute (AWS Lambda / ECS)**:
+    - Polls the SQS queue, processes the new S3 file, and runs the _inference_ code (anomaly detection).
     - Downloads the model (`model.joblib`) from S3.
     - Scales automatically to handle the data volume.
 3.  **Storage (S3)**:
@@ -89,12 +90,12 @@ This project is a **Hybrid Workflow**. Here is exactly what runs where:
 
 1.  **Setup**: Configure Terraform provider (`aws`) and backend.
 2.  **Storage**: Create S3 buckets for `raw-data`, `curated-data`, and `athena-results`.
-3.  **Streaming**: Create Kinesis Data Stream (`petrostream-ingest`) and Firehose (`petrostream-delivery`).
-4.  **Security**: Create IAM Roles to allow Kinesis to talk to Firehose, and Firehose to talk to S3.
+3.  **Messaging**: Create an SQS Queue (`petrostream-ingest-queue`) triggered by S3 file uploads.
+4.  **Security**: Create IAM Roles to allow S3 to send events to SQS, and the consumer app to read from SQS and S3.
 
 ### Phase 2: Machine Learning (Local Training)
 
-1.  **Development**: Write `ml/train_model.py`.
+1.  **Development**: Write `ml/train_model.ipynb`.
 2.  **Training**: Run the script on Mac to produce `model.joblib`.
 3.  **Deployment**: Upload `model.joblib` to the S3 bucket created in Phase 1.
 
@@ -113,7 +114,7 @@ This project is a **Hybrid Workflow**. Here is exactly what runs where:
 ### Phase 4: Data Producer (Simulation)
 
 1.  **Script**: Write `producer/producer.py`.
-2.  **Logic**: Read local Parquet -> Convert to JSON/Bytes -> `kinesis.put_record()`.
+2.  **Logic**: Read local Parquet -> Batch rows in memory (e.g., 60s) -> Write Parquet -> Upload directly to S3 `raw-data` bucket using `boto3`.
 3.  **Run**: Start this script in a terminal on your Mac.
 
 4.  **Deploy**: Dockerize and deploy to ECS Fargate (same cluster as consumer).
@@ -155,7 +156,7 @@ This project is a **Hybrid Workflow**. Here is exactly what runs where:
 ### Phase 7: Project Teardown & Cost Management (CRITICAL)
 
 1.  **Budget Alerts**: Set up AWS Budgets (e.g., alert at $10).
-2.  **Destroy**: Run `terraform destroy` to delete all resources (Kinesis, ECS, Lambda, Glue).
+2.  **Destroy**: Run `terraform destroy` to delete all resources (SQS, ECS, Lambda, Glue).
 3.  **S3 Cleanup**: Manually empty S3 buckets (Terraform won't delete non-empty buckets by default).
 4.  **Result**: $0 cost when not in use.
 
@@ -178,12 +179,12 @@ To make this easy, we will create a `Makefile` or Shell Scripts to act as your *
 
 1.  **Spot Instances**: We will use **Fargate Spot** (Recommended).
     - _Correction_: Spot instances only stop the _compute_ (the program running).
-    - _Data Safety_: Your data is stored in **S3** and **Kinesis**. It is 100% safe even if the Spot instance stops.
+    - _Data Safety_: Your data is stored in **S3**. It is 100% safe even if the Spot instance stops.
 2.  **Retention Policies**:
     - **S3**: **Keep Data Indefinitely** (Standard Class).
     - **CloudWatch Logs**: Expire logs after 1 day (Metadata only).
-3.  **Kinesis Shards**: Use **Provisioned Mode (1 Shard)** or **On-Demand**.
-4.  **Lambda**: Tune memory to minimum needed (e.g., 256MB).
+3.  **Messaging**: SQS is incredibly cheap ($0.40 per 1 million requests) so we pay basically nothing for ingestion.
+4.  **Lambda / ECS**: Tune memory to minimum needed (e.g., 256MB).
 5.  **Clean Up**: The `project_down.sh` script is your ultimate safety net.
 
 ---
